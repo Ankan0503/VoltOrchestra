@@ -1,0 +1,6 @@
+{
+  "name": "VoltOrchestra",
+  "description": "An intuitive smart home power hub. Control appliances, track daily energy costs, set automatic safety rules, and let AI optimize your power usage to prevent safety trips.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
