@@ -18,6 +18,7 @@ import AutomationCards from './components/AutomationCards';
 import AlertsPanel from './components/AlertsPanel';
 import EnergyCostSection from './components/EnergyCostSection';
 import DrawerDetails from './components/DrawerDetails';
+import VoltLogo from './components/VoltLogo';
 
 import {
   Activity,
@@ -511,9 +512,7 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-[#E5E5E7] transition-all">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#111111] flex items-center justify-center text-white shadow-sm border border-[#27272A]">
-              <Layers className="w-5 h-5 text-white" />
-            </div>
+            <VoltLogo size={38} glow={true} />
             <div>
               <span className="font-extrabold text-md tracking-tight block">VoltOrchestra</span>
               <span className="text-[9px] font-mono text-[#6E6E73] block uppercase tracking-wider leading-none">OS for Electricity v1.02</span>
