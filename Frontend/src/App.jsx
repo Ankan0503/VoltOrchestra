@@ -565,25 +565,23 @@ export default function App() {
       </header>
 
       {/* ──────────────────────────────────────────
-           Global Status Bar
+           Global Status Bar (compact)
          ────────────────────────────────────────── */}
-      <div className="bg-[#111111] text-white py-3.5 px-6 font-sans text-xs select-none border-b border-[#27272A]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+      <div className="bg-[#111111] text-white py-2.5 px-6 font-sans text-xs select-none border-b border-[#27272A]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5 text-[#30D158]">
-              <span className="w-2 h-2 rounded-full bg-[#30D158] animate-pulse"></span>
-              <span className="font-semibold">System Status: Safe & Active</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#30D158] animate-pulse"></span>
+              <span className="font-semibold">Safe & Active</span>
             </div>
-            <div className="text-gray-400">
-              Household Voltage: <strong className="text-white">230V Stable</strong>
-            </div>
-            <div className="text-gray-400">
-              Safety Temperature: <strong className="text-white">{relay.temperature.toFixed(1)}°C (Normal)</strong>
-            </div>
+            <span className="text-gray-500">|</span>
+            <span className="text-gray-400">
+              <strong className="text-white">{relay.voltage.toFixed(0)}V</strong> · {relay.temperature.toFixed(0)}°C
+            </span>
           </div>
-          <div className="text-gray-400 flex items-center gap-1">
-            <span>Active Profile:</span>
-            <span className="text-[#0A84FF] font-bold bg-[#0A84FF]/10 px-2 py-0.5 rounded-md text-[11px] border border-[#0A84FF]/20 uppercase">
+          <div className="flex items-center gap-1.5">
+            <span className="text-gray-500">Profile:</span>
+            <span className="text-[#0A84FF] font-bold bg-[#0A84FF]/10 px-2 py-0.5 rounded-md text-[10px] border border-[#0A84FF]/20 uppercase">
               {currentMode}
             </span>
           </div>
@@ -649,15 +647,15 @@ export default function App() {
       </div>
 
       {/* ──────────────────────────────────────────
-           Dynamic Section Hero Header
+           Dynamic Section Hero Header (compact)
          ────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 pt-6 pb-12">
+      <section className="max-w-7xl mx-auto px-6 pt-6 pb-6">
         <motion.div
           key={activeSection}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className={`text-center md:text-left flex flex-col md:flex-row md:items-center md:justify-between border-b pb-8 gap-6 transition-colors duration-300 ${activeSection === 'digital-twin' ? 'border-panel-blue-border' :
+          className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-5 transition-colors duration-300 ${activeSection === 'digital-twin' ? 'border-panel-blue-border' :
               activeSection === 'room-simulator' ? 'border-panel-purple-border' :
                 activeSection === 'analytics' ? 'border-panel-green-border' :
                   activeSection === 'rule-engine' ? 'border-panel-orange-border' :
@@ -665,19 +663,7 @@ export default function App() {
             }`}
         >
           <div>
-            <span className={`text-xs font-mono font-bold uppercase tracking-widest block mb-2 transition-colors duration-300 ${activeSection === 'digital-twin' ? 'text-panel-blue-text' :
-                activeSection === 'room-simulator' ? 'text-panel-purple-text' :
-                  activeSection === 'analytics' ? 'text-[#30D158]' :
-                    activeSection === 'rule-engine' ? 'text-panel-orange-text' :
-                      'text-panel-rose-text'
-              }`}>
-              {activeSection === 'digital-twin' && 'Home Power Control Center'}
-              {activeSection === 'room-simulator' && 'Custom 2.5D House Builder'}
-              {activeSection === 'analytics' && 'Energy Savings & Financials'}
-              {activeSection === 'rule-engine' && 'Smart Automation Matrix'}
-              {activeSection === 'system-cabinet' && 'Tactile 3D Hardware view'}
-            </span>
-            <h1 className={`text-4xl md:text-5xl font-extrabold tracking-tight leading-tight mb-3 transition-colors duration-300 ${activeSection === 'digital-twin' ? 'text-[#1F2C42]' :
+            <h2 className={`text-xl md:text-2xl font-bold tracking-tight transition-colors duration-300 ${activeSection === 'digital-twin' ? 'text-[#1F2C42]' :
                 activeSection === 'room-simulator' ? 'text-panel-purple-text' :
                   activeSection === 'analytics' ? 'text-panel-green-text' :
                     activeSection === 'rule-engine' ? 'text-[#431407]' :
@@ -688,70 +674,57 @@ export default function App() {
               {activeSection === 'analytics' && 'Power Bills & Savings'}
               {activeSection === 'rule-engine' && 'Automatic Power Rules'}
               {activeSection === 'system-cabinet' && 'Breaker Board Lifespan'}
-            </h1>
-            <p className={`text-md max-w-2xl leading-relaxed font-sans transition-colors duration-300 ${activeSection === 'digital-twin' ? 'text-[#5C6E85]' :
+            </h2>
+            <p className={`text-xs mt-1 transition-colors duration-300 ${activeSection === 'digital-twin' ? 'text-[#5C6E85]' :
                 activeSection === 'room-simulator' ? 'text-panel-purple-text/80' :
                   activeSection === 'analytics' ? 'text-[#4A6B53]' :
                     activeSection === 'rule-engine' ? 'text-[#52525B]' :
                       'text-panel-rose-text/80'
               }`}>
-              {activeSection === 'digital-twin' && 'Control and monitor your smart home appliances in real time. If total home power usage nears the safety limit, our smart system will automatically pause low-priority devices to prevent a safety trip.'}
-              {activeSection === 'room-simulator' && 'Build and arrange custom rooms on an interactive grid blueprint. Place windows, set up doors, and control ESP smart sockets connected in a live wireless mesh topology.'}
-              {activeSection === 'analytics' && 'See your real-time electric bill estimates, view custom energy conservation forecasts, and track which appliances use the most electricity.'}
-              {activeSection === 'rule-engine' && 'Set custom automation rules to save money and protect your devices. For example, easily pause your electric car charger automatically if aggregate power peaks.'}
-              {activeSection === 'system-cabinet' && 'View your physical solid-state electrical breakers inside an interactive 3D model. Click individual breakers to see their exact age and calculated lifespan indicators.'}
+              {activeSection === 'digital-twin' && 'Monitor and control smart appliances. Auto load-balancing protects your circuit.'}
+              {activeSection === 'room-simulator' && 'Build rooms on an interactive grid. Place doors, windows, and ESP mesh nodes.'}
+              {activeSection === 'analytics' && 'Track real-time bills, energy forecasts, and per-appliance consumption.'}
+              {activeSection === 'rule-engine' && 'Set automation rules to save money and prevent safety trips.'}
+              {activeSection === 'system-cabinet' && 'Explore breakers in an interactive 3D model with lifespan data.'}
             </p>
           </div>
 
-          <div className={`flex items-center justify-center gap-6 bg-white border p-4 rounded-[20px] shadow-sm shrink-0 self-center md:self-auto transition-colors duration-300 ${activeSection === 'digital-twin' ? 'border-panel-blue-border' :
-              activeSection === 'room-simulator' ? 'border-panel-purple-border' :
+          {/* Capacity indicator — only show for non-digital-twin tabs */}
+          {activeSection !== 'digital-twin' && (
+            <div className={`flex items-center justify-center gap-4 bg-white border p-3 rounded-[16px] shadow-sm shrink-0 transition-colors duration-300 ${activeSection === 'room-simulator' ? 'border-panel-purple-border' :
                 activeSection === 'analytics' ? 'border-panel-green-border' :
                   activeSection === 'rule-engine' ? 'border-panel-orange-border' :
                     'border-panel-rose-border'
-            }`}>
-            <div className="text-right">
-              <span className={`text-[10px] font-mono uppercase block mb-0.5 ${activeSection === 'digital-twin' ? 'text-[#5C6E85]' :
-                  activeSection === 'room-simulator' ? 'text-panel-purple-text/70' :
+              }`}>
+              <div className="text-right">
+                <span className={`text-[10px] font-mono uppercase block mb-0.5 ${activeSection === 'room-simulator' ? 'text-panel-purple-text/70' :
                     activeSection === 'analytics' ? 'text-[#4A6B53]' :
                       activeSection === 'rule-engine' ? 'text-panel-orange-text' :
                         'text-panel-rose-text/80'
-                }`}>CURRENT CAPACITY</span>
-              <span className={`text-2xl font-mono font-bold ${activeSection === 'digital-twin' ? 'text-[#1F2C42]' :
-                  activeSection === 'room-simulator' ? 'text-panel-purple-text' :
+                  }`}>CAPACITY</span>
+                <span className={`text-lg font-mono font-bold ${activeSection === 'room-simulator' ? 'text-panel-purple-text' :
                     activeSection === 'analytics' ? 'text-[#1C3A27]' :
                       activeSection === 'rule-engine' ? 'text-[#431407]' :
                         'text-panel-rose-text'
-                }`}>
-                {(relay.power / 1000).toFixed(2)} kW <span className="opacity-60 font-normal text-sm">/ {(relay.maxCapacity / 1000).toFixed(0)}kW</span>
-              </span>
+                  }`}>
+                  {(relay.power / 1000).toFixed(1)}kW
+                </span>
+              </div>
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <svg width="40" height="40" className="-rotate-90">
+                  <circle cx="20" cy="20" r="16" fill="none" strokeWidth="3" stroke="#E5E5E7" />
+                  <circle cx="20" cy="20" r="16" fill="none" strokeWidth="3" strokeDasharray="100" strokeDashoffset={100 - (100 * Math.min(100, Math.round((relay.power / relay.maxCapacity) * 100))) / 100} className="transition-all duration-500" stroke={
+                    activeSection === 'room-simulator' ? '#BF5AF2' :
+                      activeSection === 'analytics' ? '#30D158' :
+                        activeSection === 'rule-engine' ? '#F97316' : '#9F1239'
+                  } />
+                </svg>
+                <span className="absolute text-[9px] font-mono font-bold text-[#1F2C42]">
+                  {Math.min(100, Math.round((relay.power / relay.maxCapacity) * 100))}%
+                </span>
+              </div>
             </div>
-            <div className="relative w-12 h-12 flex items-center justify-center">
-              <svg width="48" height="48" className="-rotate-90">
-                <circle cx="24" cy="24" r="20" fill="none" strokeWidth="4" className={`transition-colors duration-300 ${activeSection === 'digital-twin' ? 'stroke-panel-blue-border' :
-                    activeSection === 'room-simulator' ? 'stroke-panel-purple-border' :
-                      activeSection === 'analytics' ? 'stroke-panel-green-border' :
-                        activeSection === 'rule-engine' ? 'stroke-panel-orange-border' :
-                          'stroke-panel-rose-border'
-                  }`} />
-                <circle cx="24" cy="24" r="20" fill="none" strokeWidth="4" strokeDasharray="125" strokeDashoffset={125 - (125 * Math.min(100, Math.round((relay.power / relay.maxCapacity) * 100))) / 100} className="transition-all duration-500" stroke={
-                  relay.status === 'Tripped' ? '#FF453A' :
-                    activeSection === 'digital-twin' ? '#0A84FF' :
-                      activeSection === 'room-simulator' ? '#BF5AF2' :
-                        activeSection === 'analytics' ? '#30D158' :
-                          activeSection === 'rule-engine' ? '#F97316' :
-                            '#9F1239'
-                } />
-              </svg>
-              <span className={`absolute text-[10px] font-mono font-bold ${activeSection === 'digital-twin' ? 'text-[#1F2C42]' :
-                  activeSection === 'room-simulator' ? 'text-panel-purple-text' :
-                    activeSection === 'analytics' ? 'text-[#1C3A27]' :
-                      activeSection === 'rule-engine' ? 'text-[#431407]' :
-                        'text-panel-rose-text'
-                }`}>
-                {Math.min(100, Math.round((relay.power / relay.maxCapacity) * 100))}%
-              </span>
-            </div>
-          </div>
+          )}
         </motion.div>
       </section>
 
