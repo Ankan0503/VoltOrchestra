@@ -6,19 +6,12 @@
 import React from 'react';
 import { ToggleLeft, Moon, Sun, ShieldAlert, Zap, Award, Sparkles } from 'lucide-react';
 
-interface AutomationCardsProps {
-  currentMode: string;
-  adaptiveProtection: boolean;
-  onToggleMode: (mode: any) => void;
-  onToggleAdaptive: () => void;
-}
-
 export default function AutomationCards({
   currentMode,
   adaptiveProtection,
   onToggleMode,
   onToggleAdaptive,
-}: AutomationCardsProps) {
+}) {
   
   const modes = [
     {

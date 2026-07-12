@@ -25,62 +25,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// Interfaces for our Room simulator
-export interface ESPAppliance {
-  id: string;
-  name: string;
-  type: string;
-  power: number; // Watts
-  status: 'Active' | 'Off' | 'Shed';
-  emoji: string;
-}
-
-export interface ESPDevice {
-  id: string;
-  name: string;
-  ip: string;
-  rssi: number; // Signal strength (e.g. -65)
-  status: 'Online' | 'Offline';
-  appliances: ESPAppliance[];
-}
-
-export interface WallElement {
-  id: string;
-  type: 'Window' | 'Door';
-  wall: 'North' | 'South' | 'East' | 'West';
-  offset: number; // position on the wall as % (10 to 90)
-}
-
-export interface Room {
-  id: string;
-  name: string;
-  color: string; // Tailwind accent border/bg color class
-  x: number; // Grid column index (0-7)
-  y: number; // Grid row index (0-7)
-  width: number; // width in grid cells (2-5)
-  height: number; // height in grid cells (2-5)
-  espId: string; // Associated ESP device ID
-  elements: WallElement[];
-}
-
-// Helper to calculate wall segments to create physical gaps for doors/windows
-interface WallSegment {
-  startPct: number;
-  endPct: number;
-  type: 'solid' | 'door' | 'window';
-  id?: string;
-}
-
-export interface ExtendedWallElement extends WallElement {
-  isProjected?: boolean;
-}
-
-const getRoomWallElements = (room: Room, allRooms: Room[], wallDir: 'North' | 'South' | 'East' | 'West'): ExtendedWallElement[] => {
+const getRoomWallElements = (room, allRooms, wallDir) => {
   const native = room.elements
     .filter(e => e.wall === wallDir)
     .map(e => ({ ...e, isProjected: false }));
 
-  const projected: ExtendedWallElement[] = [];
+  const projected = [];
 
   allRooms.forEach(other => {
     if (other.id === room.id) return;
@@ -183,11 +133,11 @@ const getRoomWallElements = (room: Room, allRooms: Room[], wallDir: 'North' | 'S
   return [...native, ...uniqueProjected];
 };
 
-const getWallSegments = (roomLengthPx: number, wallElems: WallElement[]) => {
+const getWallSegments = (roomLengthPx, wallElems) => {
   const elemWidthPx = 24; // Physical width of doors/windows in pixels
   const elemWidthPct = (elemWidthPx / roomLengthPx) * 100;
 
-  const segments: WallSegment[] = [];
+  const segments = [];
   let currentPct = 0;
 
   // Sort elements by offset to process them sequentially
@@ -227,41 +177,34 @@ const getWallSegments = (roomLengthPx: number, wallElems: WallElement[]) => {
   return segments;
 };
 
-interface RoomSimulatorProps {
-  sockets: any[];
-  onToggleSocket: (id: string) => void;
-  appendLog: (msg: string) => void;
-  addAlert: (title: string, desc: string, type: 'warning' | 'success' | 'info') => void;
-}
-
 export default function RoomSimulator({
   sockets,
   onToggleSocket,
   appendLog,
   addAlert,
-}: RoomSimulatorProps) {
+}) {
   // 1. Perspective state (2D Flat vs 2.5D Isometric)
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>('3d');
+  const [viewMode, setViewMode] = useState('3d');
 
   // Orbiting & zoom states for 2.5D perspective viewport
-  const [orbitPitch, setOrbitPitch] = useState<number>(58); // default rotateX
-  const [orbitYaw, setOrbitYaw] = useState<number>(-38);   // default rotateZ
-  const [orbitZoom, setOrbitZoom] = useState<number>(0.95);  // default scale
-  const [isOrbiting, setIsOrbiting] = useState<boolean>(false);
-  const [orbitStart, setOrbitStart] = useState<{ x: number; y: number; pitch: number; yaw: number }>({ x: 0, y: 0, pitch: 58, yaw: -38 });
-  const [labelStyle, setLabelStyle] = useState<'detailed' | 'compact' | 'hidden'>('compact');
+  const [orbitPitch, setOrbitPitch] = useState(58); // default rotateX
+  const [orbitYaw, setOrbitYaw] = useState(-38);   // default rotateZ
+  const [orbitZoom, setOrbitZoom] = useState(0.95);  // default scale
+  const [isOrbiting, setIsOrbiting] = useState(false);
+  const [orbitStart, setOrbitStart] = useState({ x: 0, y: 0, pitch: 58, yaw: -38 });
+  const [labelStyle, setLabelStyle] = useState('compact');
 
   // 2. Active selection index
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>('room-1');
+  const [selectedRoomId, setSelectedRoomId] = useState('room-1');
 
   // Snapping on/off for precise layouts
-  const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
+  const [snapToGrid, setSnapToGrid] = useState(true);
 
   // Wall building state for Door & Window installation
-  const [selectedWall, setSelectedWall] = useState<'North' | 'South' | 'West' | 'East'>('North');
+  const [selectedWall, setSelectedWall] = useState('North');
 
   // 3. Pre-populated smart devices (ESPs) in different rooms
-  const [esps, setEsps] = useState<ESPDevice[]>([
+  const [esps, setEsps] = useState([
     {
       id: 'esp-central',
       name: 'Central Gateway ESP32-S3',
@@ -308,7 +251,7 @@ export default function RoomSimulator({
   ]);
 
   // 4. Pre-populated rooms mapped to grid coordinates (0 to 7 coordinates)
-  const [rooms, setRooms] = useState<Room[]>([
+  const [rooms, setRooms] = useState([
     {
       id: 'room-1',
       name: 'Living Room & Dining',
@@ -371,11 +314,11 @@ export default function RoomSimulator({
   const selectedRoom = rooms.find(r => r.id === selectedRoomId);
 
   // Input fields for width and height in meters (as strings to allow smooth typing)
-  const [widthInput, setWidthInput] = useState<string>('');
-  const [heightInput, setHeightInput] = useState<string>('');
-  const [prevSelectedRoomId, setPrevSelectedRoomId] = useState<string | null>(null);
-  const [prevRoomW, setPrevRoomW] = useState<number>(0);
-  const [prevRoomH, setPrevRoomH] = useState<number>(0);
+  const [widthInput, setWidthInput] = useState('');
+  const [heightInput, setHeightInput] = useState('');
+  const [prevSelectedRoomId, setPrevSelectedRoomId] = useState(null);
+  const [prevRoomW, setPrevRoomW] = useState(0);
+  const [prevRoomH, setPrevRoomH] = useState(0);
 
   // Sync inputs with selected room dimensions when they change
   React.useEffect(() => {
@@ -396,7 +339,7 @@ export default function RoomSimulator({
     }
   }, [selectedRoom, prevSelectedRoomId, prevRoomW, prevRoomH]);
 
-  const handleWidthInputChange = (valStr: string) => {
+  const handleWidthInputChange = (valStr) => {
     setWidthInput(valStr);
     const parsed = parseFloat(valStr);
     if (!isNaN(parsed) && parsed > 0) {
@@ -415,7 +358,7 @@ export default function RoomSimulator({
     }
   };
 
-  const handleHeightInputChange = (valStr: string) => {
+  const handleHeightInputChange = (valStr) => {
     setHeightInput(valStr);
     const parsed = parseFloat(valStr);
     if (!isNaN(parsed) && parsed > 0) {
@@ -434,7 +377,7 @@ export default function RoomSimulator({
     }
   };
 
-  const handleInputBlur = (axis: 'width' | 'height') => {
+  const handleInputBlur = (axis) => {
     if (!selectedRoom) return;
     if (axis === 'width') {
       setWidthInput((selectedRoom.width * 1.5).toFixed(1));
@@ -443,42 +386,29 @@ export default function RoomSimulator({
     }
   };
 
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, axis: 'width' | 'height') => {
+  const handleInputKeyDown = (e, axis) => {
     if (e.key === 'Enter') {
       e.currentTarget.blur();
     }
   };
 
   // Drag-and-drop state for room moving
-  const [dragState, setDragState] = useState<{
-    roomId: string;
-    startRoomX: number;
-    startRoomY: number;
-    startX: number;
-    startY: number;
-  } | null>(null);
+  const [dragState, setDragState] = useState(null);
 
   // Resize-on-canvas state
-  const [resizeState, setResizeState] = useState<{
-    roomId: string;
-    axis: 'width' | 'height' | 'both';
-    startWidth: number;
-    startHeight: number;
-    startX: number;
-    startY: number;
-  } | null>(null);
+  const [resizeState, setResizeState] = useState(null);
 
   // Refs for reading 3D→2D projected screen positions of room anchor dots
-  const canvasCardRef = useRef<HTMLDivElement>(null);
-  const anchorRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const labelRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const lineRefs = useRef<Record<string, SVGLineElement | null>>({});
-  const circleRefs = useRef<Record<string, SVGCircleElement | null>>({});
+  const canvasCardRef = useRef(null);
+  const anchorRefs = useRef({});
+  const labelRefs = useRef({});
+  const lineRefs = useRef({});
+  const circleRefs = useRef({});
 
   // RAF loop: continuously read the3D anchor dots' screen positions and update the flat2D label overlay
   useEffect(() => {
     if (viewMode !== '3d' || labelStyle === 'hidden') return;
-    let raf: number;
+    let raf;
     const tick = () => {
       const card = canvasCardRef.current;
       if (!card) { raf = requestAnimationFrame(tick); return; }
@@ -513,7 +443,7 @@ export default function RoomSimulator({
   }, [rooms, viewMode, labelStyle]);
 
   // Helper colors
-  const getColorClasses = (colorName: string) => {
+  const getColorClasses = (colorName) => {
     switch (colorName) {
       case 'blue': return { bg: 'bg-[#F2F6FC]/90', border: 'border-[#0A84FF]', text: 'text-[#0A84FF]', fill: 'bg-[#0A84FF]/10', hex: '#0A84FF' };
       case 'orange': return { bg: 'bg-[#FFF9F5]/90', border: 'border-[#FF9500]', text: 'text-[#FF9500]', fill: 'bg-[#FF9500]/10', hex: '#FF9500' };
@@ -530,7 +460,7 @@ export default function RoomSimulator({
   };
 
   // Resize Room handlers
-  const handleResizeRoom = (axis: 'width' | 'height', change: number) => {
+  const handleResizeRoom = (axis, change) => {
     if (!selectedRoomId) return;
     const step = snapToGrid ? change : (change * 0.25);
     setRooms(prev => {
@@ -568,9 +498,9 @@ export default function RoomSimulator({
   };
 
   // Add Wall Element (Window or Door)
-  const handleAddWallElement = (type: 'Window' | 'Door', wall: 'North' | 'South' | 'East' | 'West') => {
+  const handleAddWallElement = (type, wall) => {
     if (!selectedRoomId) return;
-    const newElement: WallElement = {
+    const newElement = {
       id: `elem-${Date.now()}`,
       type,
       wall,
@@ -589,7 +519,7 @@ export default function RoomSimulator({
   };
 
   // Delete Wall Element
-  const handleDeleteWallElement = (elementId: string) => {
+  const handleDeleteWallElement = (elementId) => {
     if (!selectedRoomId) return;
     setRooms(prev => prev.map(r => {
       if (r.id !== selectedRoomId) return r;
@@ -600,7 +530,7 @@ export default function RoomSimulator({
   };
 
   // Update Wall Element Offset
-  const handleUpdateElementOffset = (elementId: string, value: number) => {
+  const handleUpdateElementOffset = (elementId, value) => {
     if (!selectedRoomId) return;
     setRooms(prev => prev.map(r => {
       if (r.id !== selectedRoomId) return r;
@@ -613,18 +543,18 @@ export default function RoomSimulator({
 
   // Add New Custom Room with premium template and auto-positioning
   const handleAddRoomWithTemplate = (
-    templateName: string,
-    color: string,
-    width: number,
-    height: number,
-    appliances: ESPAppliance[],
-    defaultEspId: string
+    templateName,
+    color,
+    width,
+    height,
+    appliances,
+    defaultEspId
   ) => {
     const nextId = `room-${Date.now()}`;
 
     // Create a new ESP node specifically for this template to avoid collisions
     const nextEspId = `esp-${Date.now()}`;
-    const newEsp: ESPDevice = {
+    const newEsp = {
       id: nextEspId,
       name: `${templateName.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '').trim()} Node ESP32`,
       ip: `192.168.1.${104 + rooms.length}`,
@@ -677,7 +607,7 @@ export default function RoomSimulator({
       }
     }
 
-    const newRoom: Room = {
+    const newRoom = {
       id: nextId,
       name: templateName,
       color: finalColor,
@@ -716,7 +646,7 @@ export default function RoomSimulator({
   };
 
   // Delete Room
-  const handleDeleteRoom = (roomId: string) => {
+  const handleDeleteRoom = (roomId) => {
     if (rooms.length <= 1) {
       addAlert('Action Locked', 'You must have at least one room mapped on your smart layout.', 'warning');
       return;
@@ -731,7 +661,7 @@ export default function RoomSimulator({
   };
 
   // Toggle ESP Appliance Switch directly
-  const handleToggleAppliance = (espId: string, appId: string) => {
+  const handleToggleAppliance = (espId, appId) => {
     setEsps(prev => prev.map(e => {
       if (e.id !== espId) return e;
       return {
@@ -754,11 +684,11 @@ export default function RoomSimulator({
   };
 
   // Camera orbit & mouse control handlers
-  const handleOrbitPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleOrbitPointerDown = (e) => {
     if (viewMode !== '3d') return;
 
     // Check if the user clicked inside buttons, inputs, selects (handled by their respective elements)
-    const target = e.target as HTMLElement;
+    const target = e.target;
     if (target.closest('button') || target.closest('input') || target.closest('select')) {
       return;
     }
@@ -776,7 +706,7 @@ export default function RoomSimulator({
     }
   };
 
-  const handleOrbitPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleOrbitPointerMove = (e) => {
     if (!isOrbiting || viewMode !== '3d') return;
 
     const deltaX = e.clientX - orbitStart.x;
@@ -796,17 +726,17 @@ export default function RoomSimulator({
     setOrbitYaw(nextYaw);
   };
 
-  const handleOrbitPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleOrbitPointerUp = (e) => {
     if (isOrbiting) {
       setIsOrbiting(false);
-      const target = e.target as HTMLElement;
+      const target = e.target;
       if (typeof target.releasePointerCapture === 'function') {
         target.releasePointerCapture(e.pointerId);
       }
     }
   };
 
-  const handleOrbitWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+  const handleOrbitWheel = (e) => {
     if (viewMode !== '3d') return;
 
     // Stop body scrolling when scrolling over active canvas
@@ -820,7 +750,7 @@ export default function RoomSimulator({
   };
 
   // Calculate live power for a room
-  const getRoomPowerDraw = (roomId: string) => {
+  const getRoomPowerDraw = (roomId) => {
     const rm = rooms.find(r => r.id === roomId);
     if (!rm) return 0;
     const esp = esps.find(e => e.id === rm.espId);
@@ -1045,7 +975,7 @@ export default function RoomSimulator({
                       }}
                       onPointerDown={(e) => {
                         // Avoid triggering drag if the user clicks inside interactive components (like buttons/inputs/selects)
-                        const target = e.target as HTMLElement;
+                        const target = e.target;
                         if (target.closest('button') || target.closest('input') || target.closest('select')) {
                           return;
                         }
@@ -1137,7 +1067,7 @@ export default function RoomSimulator({
                       onPointerUp={(e) => {
                         if (dragState && dragState.roomId === r.id) {
                           e.stopPropagation();
-                          const target = e.target as HTMLElement;
+                          const target = e.target;
                           if (typeof target.releasePointerCapture === 'function') {
                             target.releasePointerCapture(e.pointerId);
                           }
@@ -1177,8 +1107,8 @@ export default function RoomSimulator({
                       }}
                     >
                       {/* FLAT WALL WINDOWS & DOORS VISUALS (2D Only) */}
-                      {viewMode === '2d' && ['North', 'South', 'West', 'East'].flatMap((w) => getRoomWallElements(r, rooms, w as any)).map((elem) => {
-                        let positionStyle: React.CSSProperties = {};
+                      {viewMode === '2d' && ['North', 'South', 'West', 'East'].flatMap((w) => getRoomWallElements(r, rooms, w)).map((elem) => {
+                        let positionStyle = {};
                         if (elem.wall === 'North') {
                           positionStyle = { top: '-2px', left: `${elem.offset}%`, transform: 'translateX(-50%)' };
                         } else if (elem.wall === 'South') {
@@ -1537,7 +1467,7 @@ export default function RoomSimulator({
 
                             // Determine the precise transform based on which wall the element is on
                             let transformStr = '';
-                            let styleObj: React.CSSProperties = {
+                            let styleObj = {
                               position: 'absolute',
                               transformStyle: 'preserve-3d',
                               pointerEvents: 'none',
@@ -1932,7 +1862,7 @@ export default function RoomSimulator({
                   {/* Label style selectors */}
                   <div className="bg-white/95 backdrop-blur-md border border-gray-200/80 p-1 rounded-xl shadow-md flex items-center gap-1 text-xs">
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider px-2">Labels:</span>
-                    {(['detailed', 'compact', 'hidden'] as const).map((style) => (
+                    {(['detailed', 'compact', 'hidden']).map((style) => (
                       <button
                         key={style}
                         type="button"
@@ -1985,8 +1915,6 @@ export default function RoomSimulator({
                   </div>
                 </div>
               )}
-
-
 
               {/* ─── 2D Flat Label Overlay (outside 3D hierarchy, positions driven by RAF reading anchor dots) ─── */}
               {viewMode === '3d' && labelStyle !== 'hidden' && (
@@ -2342,7 +2270,7 @@ export default function RoomSimulator({
                   <div className="space-y-1">
                     <span className="text-[9px] text-gray-400 font-mono uppercase block font-bold">Select target Wall to build on:</span>
                     <div className="grid grid-cols-4 gap-1 bg-[#F5F5F7] p-1 rounded-xl border border-gray-200/50">
-                      {(['North', 'East', 'South', 'West'] as const).map(wall => (
+                      {(['North', 'East', 'South', 'West']).map(wall => (
                         <button
                           key={wall}
                           type="button"
@@ -2418,7 +2346,7 @@ export default function RoomSimulator({
                   {/* ESP Module Info and interactive toggles */}
                   {esps.find(e => e.id === selectedRoom.espId) ? (
                     (() => {
-                      const esp = esps.find(e => e.id === selectedRoom.espId)!;
+                      const esp = esps.find(e => e.id === selectedRoom.espId);
                       return (
                         <div className="bg-white rounded-2xl p-4 border border-[#E5E5E7] space-y-3">
                           <div className="flex items-center justify-between border-b border-gray-50 pb-2">
@@ -2531,17 +2459,6 @@ export default function RoomSimulator({
   );
 }
 
-interface Wall3DProps {
-  key?: string;
-  left: string;
-  top: string;
-  width: string;
-  height: string;
-  wallHeight?: number;
-  zOffset?: number;
-  colorHex: string;
-}
-
 function Wall3D({
   left,
   top,
@@ -2550,7 +2467,7 @@ function Wall3D({
   wallHeight = 36,
   zOffset = 0,
   colorHex,
-}: Wall3DProps) {
+}) {
   return (
     <div
       className="absolute pointer-events-none"

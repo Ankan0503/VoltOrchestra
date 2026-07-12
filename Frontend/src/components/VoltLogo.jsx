@@ -5,13 +5,7 @@
 
 import React from 'react';
 
-interface VoltLogoProps {
-    className?: string;
-    size?: number; // width and height in px
-    glow?: boolean;
-}
-
-export default function VoltLogo({ className = '', size = 36, glow = true }: VoltLogoProps) {
+export default function VoltLogo({ className = '', size = 36, glow = true }) {
     return (
         <div
             className={`relative select-none flex items-center justify-center shrink-0 ${className}`}

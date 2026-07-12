@@ -4,17 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Rule, SocketData } from '../types';
 import { Network, Plus, Trash2, Check, HelpCircle, ArrowRight, Layers, Shuffle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-interface RuleBuilderProps {
-  rules: Rule[];
-  sockets: SocketData[];
-  onToggleRule: (id: string) => void;
-  onAddRule: (rule: Omit<Rule, 'id'>) => void;
-  onDeleteRule: (id: string) => void;
-}
 
 export default function RuleBuilder({
   rules,
@@ -22,13 +13,13 @@ export default function RuleBuilder({
   onToggleRule,
   onAddRule,
   onDeleteRule,
-}: RuleBuilderProps) {
+}) {
   // New rule creation state
-  const [sourceType, setSourceType] = useState<'power' | 'temperature' | 'battery' | 'voltage'>('power');
-  const [operator, setOperator] = useState<'gt' | 'lt' | 'eq'>('gt');
-  const [value, setValue] = useState<number>(3500);
-  const [targetSocketId, setTargetSocketId] = useState<string>(sockets[1]?.id || 's2');
-  const [action, setAction] = useState<'Pause' | 'Resume' | 'Trip'>('Pause');
+  const [sourceType, setSourceType] = useState('power');
+  const [operator, setOperator] = useState('gt');
+  const [value, setValue] = useState(3500);
+  const [targetSocketId, setTargetSocketId] = useState(sockets[1]?.id || 's2');
+  const [action, setAction] = useState('Pause');
 
   const handleCreateRule = () => {
     let description = '';
@@ -181,7 +172,7 @@ export default function RuleBuilder({
               <select
                 value={sourceType}
                 onChange={(e) => {
-                  const type = e.target.value as any;
+                  const type = e.target.value;
                   setSourceType(type);
                   // Auto fill appropriate defaults for convenience
                   if (type === 'power') setValue(4000);
@@ -204,7 +195,7 @@ export default function RuleBuilder({
                 <label className="block text-[10px] font-mono text-[#7A604D] uppercase mb-1.5">OPERATOR</label>
                 <select
                   value={operator}
-                  onChange={(e) => setOperator(e.target.value as any)}
+                  onChange={(e) => setOperator(e.target.value)}
                   className="w-full bg-white border border-panel-orange-border rounded-[12px] px-3 py-2.5 text-sm text-[#422C1A] font-mono focus:outline-none focus:ring-2 focus:ring-[#FF9500]"
                 >
                   <option value="gt">&gt; (Greater Than)</option>
@@ -230,7 +221,7 @@ export default function RuleBuilder({
                 <label className="block text-[10px] font-mono text-[#7A604D] uppercase mb-1.5">2. COMMAND ACTION</label>
                 <select
                   value={action}
-                  onChange={(e) => setAction(e.target.value as any)}
+                  onChange={(e) => setAction(e.target.value)}
                   className="w-full bg-white border border-panel-orange-border rounded-[12px] px-3 py-2.5 text-sm text-[#422C1A] focus:outline-none focus:ring-2 focus:ring-[#FF9500]"
                 >
                   <option value="Pause">⏸️ Pause / Shed Load</option>

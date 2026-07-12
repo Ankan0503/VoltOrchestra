@@ -4,18 +4,12 @@
  */
 
 import React from 'react';
-import { SocketData } from '../types';
 import { Heart, ShieldAlert, Activity, CheckCircle2, ChevronRight, ActivitySquare } from 'lucide-react';
-
-interface AppleHealthPredictionProps {
-  sockets: SocketData[];
-  onSelectSocket: (id: string) => void;
-}
 
 export default function AppleHealthPrediction({
   sockets,
   onSelectSocket,
-}: AppleHealthPredictionProps) {
+}) {
   return (
     <div className="bg-panel-rose-bg rounded-[24px] border border-panel-rose-border p-8 shadow-sm transition-all duration-300">
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-panel-rose-border pb-6 mb-8 gap-4">

@@ -6,27 +6,20 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ZoomIn, ZoomOut, Activity, Lock, Unlock, RefreshCw } from 'lucide-react';
 
-interface OscilloscopeProps {
-  voltage: number;
-  current: number;
-  frequency: number;
-  relayTripped: boolean;
-}
-
 export default function Oscilloscope({
   voltage,
   current,
   frequency,
   relayTripped,
-}: OscilloscopeProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [zoom, setZoom] = useState<number>(1);
-  const [isLive, setIsLive] = useState<boolean>(true);
-  const [measureMode, setMeasureMode] = useState<boolean>(false);
-  const [measurePoint, setMeasurePoint] = useState<{ x: number; y: number } | null>(null);
-  const [offset, setOffset] = useState<number>(0);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [dragStart, setDragStart] = useState<number>(0);
+}) {
+  const canvasRef = useRef(null);
+  const [zoom, setZoom] = useState(1);
+  const [isLive, setIsLive] = useState(true);
+  const [measureMode, setMeasureMode] = useState(false);
+  const [measurePoint, setMeasurePoint] = useState(null);
+  const [offset, setOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
 
   // Animation frame loop
   useEffect(() => {
@@ -36,7 +29,7 @@ export default function Oscilloscope({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId;
     let time = 0;
 
     const resizeCanvas = () => {
@@ -215,7 +208,7 @@ export default function Oscilloscope({
   }, [voltage, current, frequency, zoom, isLive, measurePoint, offset, relayTripped]);
 
   // Handle Dragging / Panning
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseDown = (e) => {
     if (measureMode) {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -229,7 +222,7 @@ export default function Oscilloscope({
     }
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMove = (e) => {
     if (isDragging && !measureMode) {
       setOffset(e.clientX - dragStart);
     }

@@ -6,11 +6,7 @@
 import React from 'react';
 import { DollarSign, ArrowUpRight, TrendingDown, ArrowDownRight, Award } from 'lucide-react';
 
-interface EnergyCostSectionProps {
-  totalLoad: number;
-}
-
-export default function EnergyCostSection({ totalLoad }: EnergyCostSectionProps) {
+export default function EnergyCostSection({ totalLoad }) {
   // Mock pricing calculations (Rupees as requested by user template)
   const ratePerKwh = 7.50; // INR
   const todayUsageKwh = 12.4;

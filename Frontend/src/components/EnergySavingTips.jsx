@@ -7,20 +7,13 @@ import React, { useState } from 'react';
 import { CheckCircle2, Shield, Sparkles, TrendingDown, Lightbulb, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface EnergySavingTipsProps {
-  totalLoad: number;
-  relayStatus: string;
-  temperature: number;
-  renderAdvancedOscilloscope: () => React.ReactNode;
-}
-
 export default function EnergySavingTips({
   totalLoad,
   relayStatus,
   temperature,
   renderAdvancedOscilloscope,
-}: EnergySavingTipsProps) {
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Active home safety checklist items
   const isHealthy = relayStatus === 'Active';

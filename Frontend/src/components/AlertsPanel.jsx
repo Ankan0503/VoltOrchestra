@@ -4,21 +4,14 @@
  */
 
 import React from 'react';
-import { AlertNotification } from '../types';
 import { Bell, AlertTriangle, CheckCircle2, ShieldCheck, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-interface AlertsPanelProps {
-  alerts: AlertNotification[];
-  onDismissAlert: (id: string) => void;
-  onClearAll: () => void;
-}
 
 export default function AlertsPanel({
   alerts,
   onDismissAlert,
   onClearAll,
-}: AlertsPanelProps) {
+}) {
   const unreadCount = alerts.filter(a => !a.read).length;
 
   return (

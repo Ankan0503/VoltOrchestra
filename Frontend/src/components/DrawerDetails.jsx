@@ -4,23 +4,15 @@
  */
 
 import React from 'react';
-import { SocketData } from '../types';
 import { X, Sliders, BatteryCharging, AlertCircle, RefreshCw, BarChart2, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
-
-interface DrawerDetailsProps {
-  socket: SocketData | null;
-  onClose: () => void;
-  onToggleSocket: (id: string) => void;
-  onUpdatePower: (id: string, power: number) => void;
-}
 
 export default function DrawerDetails({
   socket,
   onClose,
   onToggleSocket,
   onUpdatePower,
-}: DrawerDetailsProps) {
+}) {
   if (!socket) return null;
 
   const isOff = socket.status === 'Off';

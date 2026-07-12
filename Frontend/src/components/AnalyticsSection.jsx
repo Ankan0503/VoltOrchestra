@@ -4,15 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { SocketData } from '../types';
 import { TrendingUp, Award, BatteryCharging, DollarSign, Calendar } from 'lucide-react';
 
-interface AnalyticsSectionProps {
-  sockets: SocketData[];
-}
-
-export default function AnalyticsSection({ sockets }: AnalyticsSectionProps) {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'Day' | 'Week' | 'Month'>('Day');
+export default function AnalyticsSection({ sockets }) {
+  const [selectedTimeframe, setSelectedTimeframe] = useState('Day');
 
   const totalLoad = sockets.reduce((sum, s) => sum + (s.status === 'Off' ? 0 : s.power), 0);
 
@@ -72,7 +67,7 @@ export default function AnalyticsSection({ sockets }: AnalyticsSectionProps) {
         </div>
 
         <div className="flex items-center gap-1.5 bg-white/60 border border-panel-green-border p-1 rounded-[16px]">
-          {(['Day', 'Week', 'Month'] as const).map((time) => (
+          {(['Day', 'Week', 'Month']).map((time) => (
             <button
               key={time}
               onClick={() => setSelectedTimeframe(time)}

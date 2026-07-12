@@ -4,17 +4,7 @@
  */
 
 import React from 'react';
-import { SocketData, MainRelayState } from '../types';
 import { Shield, Zap, Power, AlertTriangle, CheckCircle2, Cpu, Heart, Thermometer, Activity } from 'lucide-react';
-
-interface DigitalTwinProps {
-  sockets: SocketData[];
-  relay: MainRelayState;
-  selectedSocketId: string | null;
-  onSelectSocket: (id: string) => void;
-  onToggleSocket: (id: string) => void;
-  gridFrequency: number;
-}
 
 export default function DigitalTwin({
   sockets,
@@ -23,7 +13,7 @@ export default function DigitalTwin({
   onSelectSocket,
   onToggleSocket,
   gridFrequency,
-}: DigitalTwinProps) {
+}) {
 
   const totalLoadKW = (relay.power / 1000).toFixed(2);
   const maxCapacityKW = (relay.maxCapacity / 1000).toFixed(2);
@@ -33,7 +23,7 @@ export default function DigitalTwin({
   const activeAppliancesCount = sockets.filter(s => s.status === 'Active').length;
 
   // Friendly icons representing appliances
-  const getApplianceEmoji = (id: string) => {
+  const getApplianceEmoji = (id) => {
     switch (id) {
       case 's1': return '❄️'; // Climate
       case 's2': return '🚗'; // EV

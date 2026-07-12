@@ -4,22 +4,15 @@
  */
 
 import React, { useState } from 'react';
-import { SocketData } from '../types';
 import { Sliders, ToggleLeft, Activity, ShieldAlert, Cpu, Eye, Hourglass, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-
-interface ThreeDPanelProps {
-  sockets: SocketData[];
-  selectedSocketId: string | null;
-  onSelectSocket: (id: string) => void;
-}
 
 export default function ThreeDPanel({
   sockets,
   selectedSocketId,
   onSelectSocket,
-}: ThreeDPanelProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+}) {
+  const [hoveredId, setHoveredId] = useState(null);
 
   // Active socket detail for the expanded drawer view
   const activeSocket = sockets.find(s => s.id === selectedSocketId) || sockets[0];

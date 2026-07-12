@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { SocketData, MainRelayState, Rule, AlertNotification } from './types';
 import DigitalTwin from './components/DigitalTwin';
 import Oscilloscope from './components/Oscilloscope';
 import AiDecisionPanel from './components/AiDecisionPanel';
@@ -49,12 +48,12 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function App() {
   // --- STATE DEFINITIONS ---
 
-  const [currentMode, setCurrentMode] = useState<'Adaptive Protection' | 'Peak Shaving' | 'Eco Orchestration'>('Adaptive Protection');
-  const [adaptiveProtection, setAdaptiveProtection] = useState<boolean>(true);
-  const [gridFrequency, setGridFrequency] = useState<number>(50.0);
+  const [currentMode, setCurrentMode] = useState('Adaptive Protection');
+  const [adaptiveProtection, setAdaptiveProtection] = useState(true);
+  const [gridFrequency, setGridFrequency] = useState(50.0);
 
   // 4 Smart appliances in the home
-  const [sockets, setSockets] = useState<SocketData[]>([
+  const [sockets, setSockets] = useState([
     {
       id: 's1',
       name: 'A/C & Heating (Climate Control)',
@@ -118,7 +117,7 @@ export default function App() {
   ]);
 
   // Main system protection relay state
-  const [relay, setRelay] = useState<MainRelayState>({
+  const [relay, setRelay] = useState({
     status: 'Active',
     power: 3750,
     maxCapacity: 5000, // 5.0kW max capacity limit
@@ -129,7 +128,7 @@ export default function App() {
   });
 
   // Logical rules running on the device
-  const [rules, setRules] = useState<Rule[]>([
+  const [rules, setRules] = useState([
     {
       id: 'rule-1',
       sourceType: 'power',
@@ -153,7 +152,7 @@ export default function App() {
   ]);
 
   // Real-time console reasoning logs shown in AI Thinking Box
-  const [logs, setLogs] = useState<string[]>([
+  const [logs, setLogs] = useState([
     '11:14:00 AI Assistant: Smart power optimizer connected and running.',
     '11:14:02 AI Assistant: All home appliances are verified healthy and drawing power safely.',
     '11:14:04 AI Assistant: Automatic safety rule monitoring active. Maximum home capacity is 5.0 kW.',
@@ -162,7 +161,7 @@ export default function App() {
   ]);
 
   // Notifications in the Apple style alerts widget
-  const [alerts, setAlerts] = useState<AlertNotification[]>([
+  const [alerts, setAlerts] = useState([
     {
       id: 'alert-1',
       timestamp: '11:14',
@@ -173,11 +172,11 @@ export default function App() {
     },
   ]);
 
-  const [selectedSocketId, setSelectedSocketId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<'digital-twin' | 'analytics' | 'rule-engine' | 'system-cabinet' | 'room-simulator'>('digital-twin');
+  const [selectedSocketId, setSelectedSocketId] = useState(null);
+  const [activeSection, setActiveSection] = useState('digital-twin');
 
   // User Authentication state & Modals
-  const [user, setUser] = useState<{ email: string; name: string; role: string; avatar: string } | null>(null);
+  const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -187,16 +186,16 @@ export default function App() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   // Diagnostics Tab selector
-  const [diagnosticsTab, setDiagnosticsTab] = useState<'ai' | 'tips' | 'alerts'>('ai');
+  const [diagnosticsTab, setDiagnosticsTab] = useState('ai');
   const [isDiagnosticsExpanded, setIsDiagnosticsExpanded] = useState(false);
 
   // --- ACTIONS & HANDLERS ---
 
-  const handleSelectSocket = (id: string) => {
+  const handleSelectSocket = (id) => {
     setSelectedSocketId(id);
   };
 
-  const handleToggleSocket = (id: string) => {
+  const handleToggleSocket = (id) => {
     // Check if it is the main relay resetting
     if (id === 'MAIN_RELAY') {
       if (relay.status === 'Tripped') {
@@ -235,7 +234,7 @@ export default function App() {
     }));
   };
 
-  const handleUpdateSocketPower = (id: string, newPower: number) => {
+  const handleUpdateSocketPower = (id, newPower) => {
     setSockets(prev => prev.map(s => {
       if (s.id === id) {
         return {
@@ -248,7 +247,7 @@ export default function App() {
     }));
   };
 
-  const handleToggleRule = (id: string) => {
+  const handleToggleRule = (id) => {
     setRules(prev => prev.map(r => {
       if (r.id === id) {
         const nextState = !r.enabled;
@@ -259,8 +258,8 @@ export default function App() {
     }));
   };
 
-  const handleAddRule = (newRule: Omit<Rule, 'id'>) => {
-    const r: Rule = {
+  const handleAddRule = (newRule) => {
+    const r = {
       ...newRule,
       id: `rule-${Date.now()}`,
     };
@@ -269,18 +268,18 @@ export default function App() {
     addAlert('New Logic Gate Wired', `Rule successfully attached to target module.`, 'success');
   };
 
-  const handleDeleteRule = (id: string) => {
+  const handleDeleteRule = (id) => {
     setRules(prev => prev.filter(r => r.id !== id));
     appendLog(`LOGIC CLEANUP: Decompiled rule node ${id}.`);
   };
 
-  const handleToggleMode = (mode: any) => {
+  const handleToggleMode = (mode) => {
     setCurrentMode(mode);
     appendLog(`ORCHESTRATOR: Switched active automation profile to "${mode.toUpperCase()}"`);
     addAlert('Automation Profile Engaged', `System active mode set to ${mode}.`, 'info');
   };
 
-  const handleDismissAlert = (id: string) => {
+  const handleDismissAlert = (id) => {
     setAlerts(prev => prev.filter(a => a.id !== id));
   };
 
@@ -289,13 +288,13 @@ export default function App() {
   };
 
   // Helper utility to safely append logs
-  const appendLog = (message: string) => {
+  const appendLog = (message) => {
     const time = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `${time} ${message}`].slice(-30)); // limit log length
   };
 
   // Helper utility to add alert notification
-  const addAlert = (title: string, description: string, type: 'warning' | 'success' | 'info') => {
+  const addAlert = (title, description, type) => {
     const time = new Date().toLocaleTimeString().slice(0, 5);
     setAlerts(prev => [
       {

@@ -6,21 +6,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Eye, ShieldCheck, Cpu, Terminal, ArrowUpRight, Sparkles } from 'lucide-react';
 
-interface AiDecisionPanelProps {
-  totalLoad: number;
-  maxCapacity: number;
-  relayTripped: boolean;
-  logs: string[];
-}
-
 export default function AiDecisionPanel({
   totalLoad,
   maxCapacity,
   relayTripped,
   logs,
-}: AiDecisionPanelProps) {
-  const terminalContainerRef = useRef<HTMLDivElement>(null);
-  const [currentReasoningText, setCurrentReasoningText] = useState<string>('');
+}) {
+  const terminalContainerRef = useRef(null);
+  const [currentReasoningText, setCurrentReasoningText] = useState('');
 
   // Scroll terminal logs to bottom when they change
   useEffect(() => {
