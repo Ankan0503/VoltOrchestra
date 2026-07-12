@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
+
+  /* VoltOrchestra Accessible & Professional Pastel System */
+  --color-panel-blue-bg: #F0F4F8;
+  --color-panel-blue-border: #D1DBE5;
+  --color-panel-blue-text: #0055B3;
+
+  --color-panel-green-bg: #EDF5F1;
+  --color-panel-green-border: #CCDCD3;
+  --color-panel-green-text: #144025;
+
+  --color-panel-orange-bg: #FAF4EE;
+  --color-panel-orange-border: #E8DBCF;
+  --color-panel-orange-text: #943A00;
+
+  --color-panel-purple-bg: #F3F0F7;
+  --color-panel-purple-border: #DDD4EB;
+  --color-panel-purple-text: #4A327A;
+
+  --color-panel-rose-bg: #FFF1F2;
+  --color-panel-rose-border: #FECDD3;
+  --color-panel-rose-text: #9F1239;
+}
+
+/* Hide scrollbars globally to enforce clean bento-grid boundaries */
+::-webkit-scrollbar {
+  display: none !important;
+}
+
+html, body {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  background-color: #FAF7F2;
+  color: #111111;
+}
