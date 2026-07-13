@@ -1,0 +1,2 @@
+[tool.pyrefly]
+python-interpreter-path = "Django_Backend/venv/Scripts/python.exe"

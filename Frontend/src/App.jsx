@@ -23,6 +23,7 @@ import {
   Activity,
   ShieldAlert,
   Zap,
+  AlertTriangle,
   Power,
   Sparkles,
   Settings,
@@ -44,6 +45,8 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function App() {
   // --- STATE DEFINITIONS ---
@@ -177,6 +180,7 @@ export default function App() {
 
   // User Authentication state & Modals
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
@@ -184,10 +188,50 @@ export default function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authRole, setAuthRole] = useState('Mesh Architect');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authSignupEmail, setAuthSignupEmail] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Diagnostics Tab selector
   const [diagnosticsTab, setDiagnosticsTab] = useState('ai');
   const [isDiagnosticsExpanded, setIsDiagnosticsExpanded] = useState(false);
+
+  // --- SESSION RESTORE ON MOUNT ---
+  useEffect(() => {
+    const stored = localStorage.getItem('volt_user');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.token) {
+          fetch(`${API_URL}/api/auth/me/`, {
+            headers: { 'Authorization': `Bearer ${parsed.token}` },
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error('Session expired');
+              return res.json();
+            })
+            .then((data) => {
+              if (data.authenticated) {
+                setUser({ name: data.username, mesh_id: data.mesh_id, mesh_key: data.mesh_key, esp_count: data.esp_count || 0 });
+                setToken(parsed.token);
+              } else {
+                localStorage.removeItem('volt_user');
+              }
+            })
+            .catch(() => {
+              localStorage.removeItem('volt_user');
+            });
+        }
+      } catch {
+        localStorage.removeItem('volt_user');
+      }
+    }
+  }, []);
 
   // --- ACTIONS & HANDLERS ---
 
@@ -522,18 +566,14 @@ export default function App() {
             {user ? (
               <button
                 onClick={() => setShowProfileModal(true)}
-                className="flex items-center gap-2 bg-[#BF5AF2]/10 hover:bg-[#BF5AF2]/20 text-[#BF5AF2] px-3.5 py-1.5 rounded-full border border-[#BF5AF2]/30 text-xs font-semibold font-sans transition-all shadow-sm active:scale-95"
+                className="flex items-center gap-2 bg-[#0A84FF]/10 hover:bg-[#0A84FF]/20 text-[#0A84FF] px-3.5 py-1.5 rounded-full border border-[#0A84FF]/30 text-xs font-semibold font-sans transition-all shadow-sm active:scale-95"
               >
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30D158] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30D158]"></span>
                 </span>
-                <div className="w-4 h-4 rounded-full overflow-hidden bg-[#BF5AF2]/20 flex items-center justify-center border border-[#BF5AF2]/40">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <User className="w-2.5 h-2.5 text-[#BF5AF2]" />
-                  )}
+                <div className="w-4 h-4 rounded-full bg-[#0A84FF]/20 flex items-center justify-center border border-[#0A84FF]/40">
+                  <User className="w-2.5 h-2.5 text-[#0A84FF]" />
                 </div>
                 <span className="font-mono text-[11px] font-bold tracking-tight uppercase">Mesh Profile</span>
               </button>
@@ -1064,41 +1104,64 @@ export default function App() {
 
               {/* Form fields */}
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  const nameToUse = authName.trim() || (authEmail ? authEmail.split('@')[0] : 'User');
-                  const emailToUse = authEmail.trim() || 'ankangiri05@gmail.com';
+                  setAuthError('');
+                  setAuthLoading(true);
 
-                  setUser({
-                    name: nameToUse,
-                    email: emailToUse,
-                    role: authRole,
-                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-                  });
-                  appendLog(`MESH SECURITY: Authenticated session for user "${nameToUse}" (${emailToUse})`);
-                  addAlert('Identity Verified', `Logged in safely as ${nameToUse} (${authRole})`, 'success');
-                  setShowAuthModal(false);
+                  try {
+                    if (isSignUp && authPassword !== authConfirmPassword) {
+                      setAuthError('Passwords do not match.');
+                      setAuthLoading(false);
+                      return;
+                    }
+
+                    const endpoint = isSignUp ? '/api/auth/signup/' : '/api/auth/login/';
+                    const body = isSignUp
+                      ? { username: authEmail.trim(), email: authSignupEmail.trim(), password: authPassword }
+                      : { username: authEmail.trim(), password: authPassword };
+
+                    const res = await fetch(`${API_URL}${endpoint}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(body),
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                      setAuthError(data.error || 'Authentication failed.');
+                      setAuthLoading(false);
+                      return;
+                    }
+
+                    const userData = {
+                      name: data.username,
+                      email: authEmail.trim(),
+                      mesh_id: data.mesh_id,
+                      mesh_key: data.mesh_key,
+                      role: authRole,
+                      esp_count: data.esp_count || 0,
+                    };
+
+                    setUser(userData);
+                    setToken(data.token);
+                    localStorage.setItem('volt_user', JSON.stringify({ token: data.token }));
+
+                    appendLog(`MESH SECURITY: Authenticated session for user "${data.username}"`);
+                    addAlert('Identity Verified', `Logged in safely as ${data.username}`, 'success');
+                    setShowAuthModal(false);
+                    setAuthPassword('');
+                    setAuthError('');
+                  } catch (err) {
+                    setAuthError('Network error. Is backend running?');
+                  } finally {
+                    setAuthLoading(false);
+                  }
                 }}
                 className="space-y-4 text-left"
-              >
-                {/* Email shortcut button */}
-                {!isSignUp && !authEmail && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthEmail('ankangiri05@gmail.com');
-                      setAuthName('Ankan Giri');
-                      setAuthRole('Mesh Architect');
-                    }}
-                    className="w-full flex items-center justify-between bg-[#F5F5F7] hover:bg-[#E5E5E7] border border-[#E5E5E7] text-xs font-medium text-[#111111] px-4 py-2.5 rounded-xl transition-all mb-2"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#0A84FF]"></span>
-                      <span>Quick Sign in as Ankan</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-gray-400">ankangiri05@gmail.com</span>
-                  </button>
-                )}
+                >
+
 
                 {isSignUp && (
                   <div>
@@ -1108,9 +1171,10 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Ankan Giri"
+                        placeholder="e.g. John Doe"
                         value={authName}
                         onChange={(e) => setAuthName(e.target.value)}
+                        autoComplete="name"
                         className="w-full bg-[#FAF9F6] border border-[#E5E5E7] rounded-xl pl-10 pr-3 py-2.5 text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-[#0A84FF] outline-none transition-all"
                       />
                     </div>
@@ -1118,19 +1182,36 @@ export default function App() {
                 )}
 
                 <div>
-                  <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Email Address</label>
+                  <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Username</label>
                   <div className="relative">
-                    <Mail className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                    <User className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
                     <input
-                      type="email"
+                      type="text"
                       required
-                      placeholder="e.g. name@example.com"
+                      placeholder="e.g. johndoe"
                       value={authEmail}
                       onChange={(e) => setAuthEmail(e.target.value)}
+                      autoComplete="new-mesh-id"
                       className="w-full bg-[#FAF9F6] border border-[#E5E5E7] rounded-xl pl-10 pr-3 py-2.5 text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-[#0A84FF] outline-none transition-all"
                     />
                   </div>
                 </div>
+
+                {isSignUp && (
+                  <div>
+                    <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Email (Optional)</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="email"
+                        placeholder="e.g. name@example.com"
+                        value={authSignupEmail}
+                        onChange={(e) => setAuthSignupEmail(e.target.value)}
+                        className="w-full bg-[#FAF9F6] border border-[#E5E5E7] rounded-xl pl-10 pr-3 py-2.5 text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-[#0A84FF] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Secured Key Password</label>
@@ -1147,14 +1228,43 @@ export default function App() {
                   </div>
                 </div>
 
+                {isSignUp && (
+                  <div>
+                    <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Confirm Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={authConfirmPassword}
+                        onChange={(e) => setAuthConfirmPassword(e.target.value)}
+                        className="w-full bg-[#FAF9F6] border border-[#E5E5E7] rounded-xl pl-10 pr-3 py-2.5 text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-[#0A84FF] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
 
+                {authError && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-2.5 font-medium">
+                    {authError}
+                  </div>
+                )}
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  className="w-full bg-[#111111] text-white py-3 rounded-xl text-xs font-bold transition-all hover:bg-[#27272A] flex items-center justify-center gap-2 shadow-md active:scale-95"
+                  disabled={authLoading}
+                  className="w-full bg-[#111111] text-white py-3 rounded-xl text-xs font-bold transition-all hover:bg-[#27272A] flex items-center justify-center gap-2 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Verify Identity & Connect</span>
+                  {authLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      <span>Connecting...</span>
+                    </span>
+                  ) : (
+                    <span>Verify Identity & Connect</span>
+                  )}
                 </button>
               </form>
 
@@ -1162,7 +1272,13 @@ export default function App() {
               <div className="mt-5 pt-4 border-t border-[#F5F5F7] text-center">
                 <button
                   type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setAuthError('');
+                    setAuthPassword('');
+                    setAuthSignupEmail('');
+                    setAuthConfirmPassword('');
+                  }}
                   className="text-xs text-[#0A84FF] hover:underline font-semibold"
                 >
                   {isSignUp ? 'Already registered? Authenticate here' : 'New to VoltOrchestra? Register a new account'}
@@ -1212,14 +1328,13 @@ export default function App() {
 
               {/* Profile Card details */}
               <div className="bg-[#FAF9F6] border border-[#E5E5E7] rounded-2xl p-4 flex items-center gap-4 mb-5">
-                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-[#BF5AF2]/40 bg-white">
-                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <div className="w-14 h-14 rounded-full bg-[#0A84FF]/10 border-2 border-[#0A84FF]/30 flex items-center justify-center">
+                  <User className="w-6 h-6 text-[#0A84FF]" />
                 </div>
                 <div>
                   <h4 className="text-md font-bold text-[#111111]">{user.name}</h4>
-                  <p className="text-xs text-gray-500 font-mono mb-1">{user.email}</p>
                   <span className="text-[10px] font-mono font-bold uppercase tracking-wider bg-[#BF5AF2]/15 text-[#BF5AF2] px-2.5 py-0.5 rounded-full border border-[#BF5AF2]/25">
-                    {user.role}
+                    {user.role || 'Mesh Architect'}
                   </span>
                 </div>
               </div>
@@ -1230,8 +1345,16 @@ export default function App() {
 
                 <div className="bg-[#F5F5F7] rounded-xl p-3 border border-gray-100 space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Security Token</span>
-                    <span className="font-mono text-[#111111] font-semibold">mesh_v_0xbf5af2c3...</span>
+                    <span className="text-gray-500">Mesh ID</span>
+                    <span className="font-mono text-[#111111] font-semibold text-right max-w-[180px] truncate" title={user.mesh_id}>
+                      {user.mesh_id || 'Not assigned'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Mesh Key</span>
+                    <span className="font-mono text-[#111111] font-semibold text-right max-w-[180px] truncate" title={user.mesh_key}>
+                      {user.mesh_key || 'Not assigned'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Node Sync State</span>
@@ -1241,18 +1364,42 @@ export default function App() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">Linked Smart Assets</span>
-                    <span className="font-semibold text-[#111111]">4 Active ESP Sockets</span>
+                    <span className="font-semibold text-[#111111]">{user.esp_count || 0} Active ESP Socket{(user.esp_count || 0) !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Delete Account */}
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(true);
+                    setDeletePassword('');
+                    setDeleteError('');
+                  }}
+                  className="w-full border border-red-200 text-red-500 hover:bg-red-50 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Delete Account</span>
+                </button>
               </div>
 
               {/* Action buttons */}
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     const prevUser = user;
+                    try {
+                      await fetch(`${API_URL}/api/auth/logout/`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                      });
+                    } catch { /* ignore network errors on logout */ }
+                    localStorage.removeItem('volt_user');
                     setUser(null);
+                    setToken(null);
                     setShowProfileModal(false);
                     appendLog(`MESH SECURITY: Terminated session for "${prevUser.name}"`);
                     addAlert('Logged Out', 'Terminated mesh session safely.', 'info');
@@ -1268,6 +1415,116 @@ export default function App() {
                   className="flex-1 bg-[#111111] text-white hover:bg-[#27272A] py-3 rounded-xl text-xs font-bold transition-all text-center"
                 >
                   Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ──────────────────────────────────────────
+           Delete Account Confirmation Modal
+         ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute inset-0 bg-[#111111]/45 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative w-full max-w-sm bg-white border border-[#E5E5E7] rounded-[28px] shadow-2xl p-6 overflow-hidden z-10"
+            >
+              <div className="text-center mb-5">
+                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <h3 className="text-lg font-extrabold text-[#111111] tracking-tight">Delete Account</h3>
+                <p className="text-xs text-[#6E6E73] mt-1 font-sans">
+                  This action is permanent. All your data will be removed.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] text-gray-400 font-mono uppercase block mb-1.5">Enter Password to Confirm</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      className="w-full bg-[#FAF9F6] border border-[#E5E5E7] rounded-xl pl-10 pr-3 py-2.5 text-xs font-semibold text-[#111111] focus:ring-2 focus:ring-red-400 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                {deleteError && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-2.5 font-medium">
+                    {deleteError}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={deleteLoading || !deletePassword}
+                  onClick={async () => {
+                    setDeleteLoading(true);
+                    setDeleteError('');
+                    try {
+                      const res = await fetch(`${API_URL}/api/auth/delete/`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ password: deletePassword }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) {
+                        setDeleteError(data.error || 'Failed to delete account.');
+                        setDeleteLoading(false);
+                        return;
+                      }
+                      localStorage.removeItem('volt_user');
+                      setUser(null);
+                      setToken(null);
+                      setShowDeleteModal(false);
+                      setShowProfileModal(false);
+                      addAlert('Account Deleted', 'Your account has been permanently removed.', 'info');
+                    } catch {
+                      setDeleteError('Network error. Is backend running?');
+                    } finally {
+                      setDeleteLoading(false);
+                    }
+                  }}
+                  className="w-full bg-red-500 text-white py-3 rounded-xl text-xs font-bold transition-all hover:bg-red-600 flex items-center justify-center gap-2 shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      <span>Deleting...</span>
+                    </span>
+                  ) : (
+                    <span>Permanently Delete Account</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-full text-[#6E6E73] hover:text-[#111111] py-2 text-xs font-semibold transition-all"
+                >
+                  Cancel
                 </button>
               </div>
             </motion.div>

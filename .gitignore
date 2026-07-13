@@ -1,0 +1,14 @@
+#Frontend
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+#Django_Backend
+venv/
+__pycache__*
+db.sqlite3
